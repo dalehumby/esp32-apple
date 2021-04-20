@@ -1,0 +1,12 @@
+{
+  "station_id": "lounge",
+  "wifi": {
+    "ssid": "yourwifi",
+    "password": "yourpassword"
+  },
+  "mqtt": {
+    "server": "10.0.0.1",
+    "username": "username",
+    "password": "password"
+  }
+}
