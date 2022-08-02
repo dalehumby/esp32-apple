@@ -31,14 +31,19 @@ watch_addr = None
 
 
 class Filter:
+    """
+    Low pass software filter using the Exponential Weighted Function
+    (or Infinite Impulse Response) filtering method.
+    """
+
     def __init__(self, init_value, n):
         self.n = n
-        self.sum = init_value * 2 ** n
+        self.sum = init_value * n
 
     def update(self, value):
-        average = self.sum / 2 ** self.n
+        average = self.sum / self.n
         self.sum = self.sum - average + value
-        return self.sum / 2 ** self.n
+        return self.sum / self.n
 
 
 def mqtt_pub(args):
@@ -46,7 +51,7 @@ def mqtt_pub(args):
     """
     Periodically publish metrics to MQTT.
     """
-    print("Pubishing to MQTT")
+    # print("Pubishing to MQTT")
     try:
         mqtt.publish(
             b"%s/sensor/%s/state" % (config["station_id"], device_id),
@@ -58,6 +63,7 @@ def mqtt_pub(args):
 
 
 def hex(bytes):
+    """Change bytes to printable hex string."""
     res = ""
     for b in bytes:
         res += "%02x" % b
@@ -65,7 +71,7 @@ def hex(bytes):
 
 
 def watchdog_expired(t):
-    """Start the CPU if the timer expires."""
+    """Restart the CPU if the timer expires."""
     global watchdog
     print("Watchdog timer expired, restarting CPU...")
     watchdog.deinit()
@@ -78,8 +84,9 @@ def restart_watchdog():
     watchdog.init(period=30000, mode=Timer.ONE_SHOT, callback=watchdog_expired)
 
 
-watch_rssi1 = Filter(-70, 1)
-watch_rssi2 = Filter(-70, 2)
+# Setup 2 low pass filters
+watch_rssi1 = Filter(-70, 2)
+watch_rssi2 = Filter(-70, 3)
 
 
 def ble_handler(event, data):
@@ -96,9 +103,10 @@ def ble_handler(event, data):
         addr = hex(bytes(addr))
         adv_data = hex(bytes(adv_data))
         rssi = int(rssi)
-        print(addr_type, addr, adv_type, rssi, adv_data)
+        if addr == "49bac8fb5a6f":
+            print(addr_type, addr, adv_type, rssi, adv_data)
         if adv_data[16:28] == "4c0010050198" or addr == watch_addr:
-            print("Found Apple Watch")
+            # print("Found Apple Watch")
             # TODO connect to Apple Watch and check that the "Device Information" service
             # has the characteristic "Model Number" "Watch3,3"
             watch_addr = addr
@@ -119,8 +127,14 @@ esp.osdebug(None)
 alloc_emergency_exception_buf(100)
 freq(240000000)
 
+# Setup watchdog timer
+watchdog = Timer(0)
+restart_watchdog()
+
 # Wait before registering interrupts and timers
-print("Waiting 2s before starting up... press CTRL+C to get REPL")
+print(
+    "Waiting 2s before starting up... press CTRL+C to get REPL and stop the watchdog timer"
+)
 time.sleep(2)
 
 with open("config.json", "r") as f:
@@ -153,9 +167,6 @@ ble.config(rxbuf=2000)
 ble.irq(ble_handler)
 ble.active(True)
 
-# Setup watchdog timer
-watchdog = Timer(0)
-restart_watchdog()
 
 print("Activating Bluetooth scan...")
 

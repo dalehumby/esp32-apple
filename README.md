@@ -6,7 +6,7 @@ Once an Apple Watch has been detected the MAC address is tracked and the RSSI (s
 
 Home Automation presence detection software can track the RSSI of the watch and determine which room you are in. This can be used for automations.
 
-A project to do room presence detection is my [presence-ml]() project. Using multiple, even overlapping, scanners it can predict which room you are in, based on tracking your device.
+A project to do room presence detection is my [room-presence-ml](https://github.com/dalehumby/room-presence-ml) project. Using multiple, even overlapping, scanners it can predict which room you are in, based on tracking your device.
 
 ## How to load this on to an ESP32
 See my intro to ESP's from [Google DevFest 2020](https://github.com/dalehumby/DevFest2020) that explains how to flash MicroPython on to an ESP8266 or ESP32. (Note that you need to use an ESP32 for this project as the ESP8266 does _not_ have Bluetooth.)
